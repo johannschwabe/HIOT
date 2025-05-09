@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, FastAPI
 from sqlalchemy.orm import Session
 
 from app.main import HumiditySensor, HumidityMeasurement, get_db, app
+from app.monitor_integration import humidity_monitor
 from app.schemas import Measurement, MeasurementCreate, Sensor, SensorCreate
 
 
@@ -75,6 +76,34 @@ def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db
     return measurements
 
 
+@app.get("/monitor/status")
+def get_monitor_status():
+    """Get the current monitoring status and thresholds"""
+    if not humidity_monitor:
+        raise HTTPException(status_code=503, detail="Monitor not initialized")
+
+    return {
+        "status": "running" if humidity_monitor._monitor_task else "stopped",
+        "thresholds": {
+            "humidity_high": humidity_monitor.humidity_threshold_high,
+            "humidity_low": humidity_monitor.humidity_threshold_low,
+            "connection_minutes": humidity_monitor.connection_threshold_minutes
+        },
+        "check_interval_seconds": humidity_monitor.check_interval
+    }
+
+
+@app.post("/monitor/check-now")
+async def trigger_immediate_check():
+    """Trigger an immediate check of all sensors"""
+    if not humidity_monitor:
+        raise HTTPException(status_code=503, detail="Monitor not initialized")
+
+    try:
+        await humidity_monitor._check_all_sensors()
+        return {"status": "check completed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Check failed: {str(e)}")
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
