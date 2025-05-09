@@ -125,7 +125,11 @@ def create_measurement(measurement: MeasurementCreate, db: Session = Depends(get
     # Check if sensor exists
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == measurement.sensor_id).first()
     if sensor is None:
-        raise HTTPException(status_code=404, detail="Sensor not found")
+        db_sensor = HumiditySensor(name="Unknown")
+        db.add(db_sensor)
+        db.commit()
+        db.refresh(db_sensor)
+        sensor = db_sensor
 
     # Update last connection time
     sensor.last_connection = datetime.datetime.utcnow()
