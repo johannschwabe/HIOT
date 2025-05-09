@@ -4,11 +4,12 @@ import logging
 from typing import Optional, Dict, Any, Union
 from enum import Enum
 import telegram
-from telegram.ext import Updater
-import asyncio
+from dotenv import load_dotenv
 
+from app.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+
+load_dotenv()
 logger = logging.getLogger("telegram-notifier")
-
 
 class AlertLevel(Enum):
     """Enum for different alert levels"""
@@ -26,8 +27,6 @@ class TelegramNotifier:
 
     def __init__(
             self,
-            bot_token: Optional[str] = None,
-            chat_id: Optional[str] = None,
             disable_notification: bool = False
     ):
         """
@@ -38,16 +37,15 @@ class TelegramNotifier:
             chat_id: Telegram chat ID to send messages to
             disable_notification: Whether to send notifications silently
         """
-        self.bot_token = bot_token or os.getenv("TELEGRAM_BOT_TOKEN")
-        self.chat_id = chat_id or os.getenv("TELEGRAM_CHAT_ID")
+        self.bot_token = TELEGRAM_BOT_TOKEN
+        self.chat_id = TELEGRAM_CHAT_ID
         self.disable_notification = disable_notification
         self.bot = None
-
         # Validate credentials
         if not self.bot_token or not self.chat_id:
             logger.warning(
                 "Telegram credentials not properly configured. "
-                "Notifications will be logged but not sent."
+                "Notifications will be logged but not sent!"
             )
             self._enabled = False
         else:

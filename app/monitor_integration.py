@@ -1,16 +1,14 @@
 # app/monitor_integration.py
-import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 from app.scheduler import HumidityMonitor
 from app.telegram_notifier import TelegramNotifier, AlertLevel
+from fastapi import FastAPI
 
 logger = logging.getLogger("humidity-app")
-
 # Global monitor instance
 humidity_monitor = None
-
 
 @asynccontextmanager
 async def lifespan(app):
@@ -39,3 +37,9 @@ async def lifespan(app):
     # Shutdown monitor
     await humidity_monitor.stop()
     logger.info("Humidity monitor stopped")
+
+
+app = FastAPI(
+    title="IoT Humidity Sensor API",
+    lifespan=lifespan
+)

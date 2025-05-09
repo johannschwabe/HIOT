@@ -3,10 +3,9 @@ import datetime
 from fastapi import Depends, HTTPException, FastAPI
 from sqlalchemy.orm import Session
 
-from app.main import HumiditySensor, HumidityMeasurement, get_db, app
-from app.monitor_integration import humidity_monitor
-from app.schemas import Measurement, MeasurementCreate, Sensor, SensorCreate
-
+from app.monitor_integration import humidity_monitor, app
+from app.schemas import Measurement, MeasurementCreate, Sensor, SensorCreate, HumiditySensor, HumidityMeasurement
+from app.session import get_db
 
 
 # Routes

@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Dict, Optional, List, Tuple
 
-from app.main import SessionLocal, HumiditySensor, HumidityMeasurement
+from app.schemas import HumiditySensor, HumidityMeasurement
+from app.session import  SessionLocal
 from app.telegram_notifier import TelegramNotifier, AlertLevel
 
 logger = logging.getLogger("humidity-monitor")
