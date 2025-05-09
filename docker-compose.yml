@@ -40,4 +40,4 @@ volumes:
 
 networks:
   private:
-    internal: true
+    internal: false
