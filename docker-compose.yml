@@ -14,8 +14,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - private
 
   api:
     build: ./app
@@ -31,13 +29,8 @@ services:
       - DB_NAME=${DB_NAME}
     volumes:
       - ./app:/app
-    networks:
-      - private
 
 
 volumes:
   postgres_data:
 
-networks:
-  private:
-    internal: false
