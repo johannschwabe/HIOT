@@ -50,23 +50,13 @@ app = FastAPI(
 )
 
 
-# Routes
-@app.post("/sensors/", response_model=Sensor)
-def create_sensor(sensor: SensorCreate, db: Session = Depends(get_db)):
-    db_sensor = HumiditySensor(name=sensor.name)
-    db.add(db_sensor)
-    db.commit()
-    db.refresh(db_sensor)
-    return db_sensor
-
-
-@app.get("/sensors/", response_model=list[Sensor])
+@app.get("/humiditySensors/", response_model=list[Sensor])
 def read_sensors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     sensors = db.query(HumiditySensor).offset(skip).limit(limit).all()
     return sensors
 
 
-@app.get("/sensors/{sensor_id}", response_model=Sensor)
+@app.get("/humiditySensor/{sensor_id}", response_model=Sensor)
 def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
     if sensor is None:
@@ -74,7 +64,7 @@ def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
     return sensor
 
 
-@app.post("/measurements/", response_model=Measurement)
+@app.post("/humidityMeasurements/", response_model=Measurement)
 def create_measurement(measurement: MeasurementCreate, db: Session = Depends(get_db)):
     # Check if sensor exists
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == measurement.sensor_id).first()
@@ -102,13 +92,7 @@ def create_measurement(measurement: MeasurementCreate, db: Session = Depends(get
     return db_measurement
 
 
-@app.get("/measurements/", response_model=list[Measurement])
-def read_measurements(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    measurements = db.query(HumidityMeasurement).offset(skip).limit(limit).all()
-    return measurements
-
-
-@app.get("/measurements/sensor/{sensor_id}", response_model=list[Measurement])
+@app.get("/humidityMeasurements/sensor/{sensor_id}", response_model=list[Measurement])
 def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     measurements = db.query(HumidityMeasurement).filter(
         HumidityMeasurement.sensor_id == sensor_id
@@ -148,3 +132,7 @@ async def trigger_immediate_check():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.post("/humiditySensors/rename", response_model=HumiditySensor)
+async def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(get_db)):
+    db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).update({"name": new_name})
