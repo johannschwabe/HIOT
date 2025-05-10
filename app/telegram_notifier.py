@@ -49,7 +49,7 @@ class TelegramNotifier:
         self.chat_id = TELEGRAM_CHAT_ID
         self.disable_notification = disable_notification
         self.bot = None
-        self.application = None
+        self.application: Application | None = None
         self._command_handlers = {}
 
         # Validate credentials
@@ -258,7 +258,7 @@ class TelegramNotifier:
 
         try:
             await self.application.initialize()
-            await self.application.start_polling()
+            self.application.run_polling()
             logger.info("Started polling for commands")
             return True
         except Exception as e:
