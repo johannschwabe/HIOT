@@ -97,8 +97,6 @@ class TelegramNotifier:
             ),
             "custom": "{level} {message}"
         }
-        self.register_command("rename", self._rename_humidity_sensor, "Rename humidity sensor")
-        self.register_command("help", self._help_command, "Show this help message")
 
     def _initialize_command_handler(self):
         """Initialize the application for handling commands"""
@@ -109,6 +107,7 @@ class TelegramNotifier:
             self.application.add_handler(CommandHandler("start", self._start_command))
             self.application.add_handler(CommandHandler("help", self._help_command))
             self.application.add_handler(CommandHandler("status", self._status_command))
+            self.application.add_handler(CommandHandler("rename", self._rename_humidity_sensor))
 
             # Handler for unknown commands
             self.application.add_handler(MessageHandler(
