@@ -36,7 +36,7 @@ class TelegramNotifier:
     def __init__(
             self,
             disable_notification: bool = False,
-            handle_commands: bool = False
+            handle_commands: bool = True
     ):
         """
         Initialize the TelegramNotifier with credentials.
