@@ -133,6 +133,7 @@ async def trigger_immediate_check():
 def health_check():
     return {"status": "healthy"}
 
-@app.post("/humiditySensors/rename", response_model=HumiditySensor)
+@app.post("/humiditySensors/rename", response_model=Sensor)
 async def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(get_db)):
     db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).update({"name": new_name})
+    return db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
