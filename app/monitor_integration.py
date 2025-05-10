@@ -32,7 +32,7 @@ async def lifespan(app):
         connection_threshold_minutes=30,
         telegram_notifier=notifier
     )
-
+    await notifier.start_polling()
     # Start monitor
     await humidity_monitor.start()
     logger.info("Humidity monitor started")
