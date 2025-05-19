@@ -32,7 +32,9 @@ class TelegramBot:
 
                 msg = "📊 Sensors:\n\n"
                 for sensor in sensors:
-                    msg += f"ID: {sensor['id']} - {sensor['name']}\n"
+                    async with session.get(f"{self.api_url}/humidityMeasurements/sensor/{sensor['id']}/") as lastMeasuremt:
+                        res = await lastMeasuremt.json()
+                        msg += f"ID: {sensor['id']} - {sensor['name']} - {res['humidity']}\n"
 
                 await update.message.reply_text(msg)
 
