@@ -1,7 +1,7 @@
-# app/main.py
+# api/main.py
 
 
-from app.monitor_integration import app
+from api.API import app
 # Load environment variables
 
 if __name__ == "__main__":

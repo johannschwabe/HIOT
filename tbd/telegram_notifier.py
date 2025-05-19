@@ -1,4 +1,4 @@
-# app/telegram_notifier.py
+# api/telegram_notifier.py
 import os
 import logging
 from typing import Optional, Dict, Any, Union, List, Callable
@@ -10,9 +10,9 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
 from dotenv import load_dotenv
 
-from app.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-from app.schemas import HumiditySensor
-from app.session import SessionLocal
+from api.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from api.schemas import HumiditySensor
+from api.session import SessionLocal
 
 load_dotenv()
 logger = logging.getLogger("telegram-notifier")
@@ -36,14 +36,12 @@ class TelegramNotifier:
     def __init__(
             self,
             disable_notification: bool = False,
-            handle_commands: bool = True
     ):
         """
         Initialize the TelegramNotifier with credentials.
 
         Args:
             disable_notification: Whether to send notifications silently
-            handle_commands: Whether to start a command listener
         """
         self.bot_token = TELEGRAM_BOT_TOKEN
         self.chat_id = TELEGRAM_CHAT_ID
@@ -66,9 +64,6 @@ class TelegramNotifier:
                 self._enabled = True
                 logger.info("Telegram notifier initialized successfully")
 
-                # Initialize the application for command handling if requested
-                if handle_commands:
-                    self._initialize_command_handler()
             except Exception as e:
                 logger.error(f"Failed to initialize Telegram bot: {e}")
                 self._enabled = False
@@ -98,36 +93,12 @@ class TelegramNotifier:
             "custom": "{level} {message}"
         }
 
-    def _initialize_command_handler(self):
-        """Initialize the application for handling commands"""
-        try:
-            self.application = Application.builder().token(self.bot_token).build()
-
-            # Register built-in commands
-            self.application.add_handler(CommandHandler("start", self._start_command))
-            self.application.add_handler(CommandHandler("help", self._help_command))
-            self.application.add_handler(CommandHandler("status", self._status_command))
-            self.application.add_handler(CommandHandler("rename", self._rename_humidity_sensor))
-
-            # Handler for unknown commands
-            self.application.add_handler(MessageHandler(
-                filters.COMMAND, self._unknown_command
-            ))
-
-            logger.info("Command handler initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize command handler: {e}")
-            self.application = None
 
     @property
     def is_enabled(self) -> bool:
         """Check if the notifier is properly configured and enabled"""
         return self._enabled
 
-    @property
-    def is_command_handler_enabled(self) -> bool:
-        """Check if the command handler is properly configured and enabled"""
-        return self._enabled and self.application is not None
 
     async def _send_message_async(self, text: str) -> bool:
         """

@@ -16,7 +16,7 @@ services:
       retries: 5
 
   api:
-    build: ./app
+    build: api
     depends_on:
       - db
     ports:
@@ -30,9 +30,17 @@ services:
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
     volumes:
-      - ./app:/app
+      - ./api:/api
 
-
+  telegram-service:
+    build: ./telegram_responder
+    restart: always
+    environment:
+      - API_URL=http://api:8000
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+    depends_on:
+      - api
 volumes:
   postgres_data:
 

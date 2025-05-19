@@ -1,4 +1,4 @@
-# app/Dockerfile
+# api/Dockerfile
 FROM python:3.12-slim
 
 WORKDIR /

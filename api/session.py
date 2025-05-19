@@ -1,12 +1,10 @@
 # SQLAlchemy setup
 import logging
-import os
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+from api.ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 
 logger = logging.getLogger("telegram-notifier")
 
