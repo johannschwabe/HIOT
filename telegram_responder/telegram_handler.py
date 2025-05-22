@@ -1,6 +1,6 @@
 from urllib.parse import urlencode
 
-from telegram import ReplyKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 import aiohttp
 
@@ -116,8 +116,8 @@ You can also use these commands directly:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/humiditySensors/") as response:
                     sensors = await response.json()
-                    id_name = [f"{sensor['id']} - {sensor['name']}" for sensor in sensors]
-                    keyboard = ReplyKeyboardMarkup([id_name], one_time_keyboard=True)
+                    id_name = [InlineKeyboardButton(f"{sensor['id']} - {sensor['name']}", callback_data=f"{sensor['id']}") for sensor in sensors]
+                    keyboard = InlineKeyboardMarkup([id_name])
                     await update.message.reply_text(
                         'Which sensor do you want to rename?',
                         reply_markup=keyboard
