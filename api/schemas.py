@@ -33,6 +33,7 @@ class HumidityMeasurementCreateORM(BaseModel):
     sensor_id: int
     raw_value: float
     humidity: float
+    battery_voltage: float = 0.0
 
     class Config:
         orm_mode = True
@@ -57,5 +58,6 @@ class HumidityMeasurement(Base):
     raw_value = Column(Float, nullable=False)
     humidity = Column(Float, nullable=False)
     date = Column(DateTime, default=datetime.datetime.utcnow)
+    battery_voltage = Column(Float, nullable=False, default=0.0)
 
 

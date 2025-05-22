@@ -10,6 +10,9 @@ class Monitor:
         self.api_url = api_url
         self.bot = Bot(token=telegram_token)
         self.chat_ids = chat_ids
+        self.last_alert = None
+        self.last_alert_time = None
+        self.min_alert_interval = 60 * 60 * 4  # Minimum interval between alerts in seconds
 
     async def check_constraints(self):
         """Check database constraints via the API"""
@@ -17,11 +20,15 @@ class Monitor:
             # Get data from your API
             async with session.get(f"{self.api_url}/humidity/check") as response:
                 alert = await response.text()
+                cleaned_text: str = alert.replace('\\n', '\n').replace('"', '')
+
                 if len(alert) > 0:
-                   await self._send_alert(alert)
+                   await self._send_alert(cleaned_text)
 
     async def _send_alert(self, message):
         """Send alert to all configured chat IDs"""
+        if self.last_alert == message and self.last_alert_time and (time.time() - self.last_alert_time) < self.min_alert_interval:
+            return
         for chat_id in self.chat_ids:
             await self.bot.send_message(chat_id=chat_id, text=message)
 
