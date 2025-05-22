@@ -15,26 +15,10 @@ class Monitor:
         """Check database constraints via the API"""
         async with aiohttp.ClientSession() as session:
             # Get data from your API
-            async with session.get(f"{self.api_url}/humiditySensors/") as response:
-                sensors = await response.json()
-
-            # Fetch recent measurements
-            for sensor in sensors:
-                async with session.get(
-                        f"{self.api_url}/humidityMeasurements/sensor/{sensor['id']}?limit=1"
-                ) as response:
-                    measurements = await response.json()
-
-                # Apply your constraint checks
-                if measurements and self._check_humidity_constraints(measurements[0]):
-                    await self._send_alert(
-                        f"⚠️ Sensor {sensor['name']}: Humidity {measurements[0]['humidity']}% out of range!"
-                    )
-
-    def _check_humidity_constraints(self, measurement):
-        """Check if measurement violates constraints"""
-        humidity = measurement['humidity']
-        return humidity < 30.0 or humidity > 70.0
+            async with session.get(f"{self.api_url}/humidity/check") as response:
+                alert = await response.text()
+                if len(alert) > 0:
+                   await self._send_alert(alert)
 
     async def _send_alert(self, message):
         """Send alert to all configured chat IDs"""

@@ -74,34 +74,41 @@ def read_humidity_overview( db: Session = Depends(get_db)):
     res = ""
     sensors = db.query(HumiditySensor).order_by(HumiditySensor.last_connection).all()
     for sensor in sensors:
-        measurements = (db.query(HumidityMeasurement).filter(HumidityMeasurement.sensor_id == sensor.id)
-         .order_by(HumidityMeasurement.date).limit(1).all())
-        if measurements:
-            measurement = measurements[0]
-            icon = "🌿"
-            if measurement.humidity > sensor.overflow_level:
-                icon = "🤿"
-            if measurement.humidity < sensor.alert_level:
-                icon = "🍂"
-            if measurement.humidity < sensor.warning_level:
-                icon = "🔥"
-            if measurement.humidity < sensor.critical_level:
-                icon = "💀"
-            seconds_since_update = (measurement.date - datetime.datetime.utcnow()).total_seconds()
-            hours = seconds_since_update // 3600
-            alerts = min(hours, 4)
-            alert = ""
-            if alerts > 0:
-                alert = " ({alerts * '🤖'})"
-            if hours > 4:
-                alert = " ☠️"
-            res += f"{sensor.name}{alert}: {measurement.humidity:.1f}% {icon}\n"
+        measurement: HumidityMeasurement = db.query(HumidityMeasurement).filter(HumidityMeasurement.sensor_id == sensor.id).order_by(HumidityMeasurement.date).first()
+        if measurement:
+            res += get_alert_text(sensor, measurement)
     return res
 
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+@app.get("/humidity/check", response_model=list[HumidityMeasurementORM])
+def check_humidity(db: Session = Depends(get_db)):
+    """
+    Check the latest humidity measurement for all sensors
+
+    Returns:
+        Latest measurement for each sensor if critical
+    """
+    sensors = db.query(HumiditySensor).all()
+    if not sensors:
+        raise HTTPException(status_code=404, detail="No sensors found")
+
+    res = ""
+    for sensor in sensors:
+        latest_measurement = db.query(HumidityMeasurement).filter(
+            HumidityMeasurement.sensor_id == sensor.id
+        ).order_by(HumidityMeasurement.date.desc()).first()
+
+        if latest_measurement and (
+                latest_measurement.humidity > sensor.overflow_level or
+                latest_measurement.humidity < sensor.alert_level
+        ):
+            res += get_alert_text(sensor, latest_measurement)
+
+    return res
 
 
 @app.post("/humiditySensors/rename", response_model=HumiditySensorORM)
@@ -187,3 +194,23 @@ def get_all_sensors_humidity_plot_7days(
 
     return Response(content=buffer.getvalue(), media_type="image/png")
 
+
+def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement):
+    icon = "🌿"
+    if measurement.humidity > sensor.overflow_level:
+        icon = "🤿"
+    if measurement.humidity < sensor.alert_level:
+        icon = "🍂"
+    if measurement.humidity < sensor.warning_level:
+        icon = "🔥"
+    if measurement.humidity < sensor.critical_level:
+        icon = "💀"
+    seconds_since_update = (measurement.date - datetime.datetime.utcnow()).total_seconds()
+    hours = seconds_since_update // 3600
+    alerts = min(hours, 4)
+    alert = ""
+    if alerts > 0:
+        alert = " ({alerts * '🤖'})"
+    if hours > 4:
+        alert = " ☠️"
+    return f"{sensor.name}{alert}: {measurement.humidity:.1f}% {icon}\n"
