@@ -1,14 +1,15 @@
+from typing import List, Dict, Any, Optional
 from urllib.parse import urlencode
 
-from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler, ContextTypes
 import aiohttp
 
 
 class TelegramBot:
-    def __init__(self, api_url, telegram_token):
-        self.api_url = api_url
-        self.application = Application.builder().token(telegram_token).build()
+    def __init__(self, api_url: str, telegram_token: str) -> None:
+        self.api_url: str = api_url
+        self.application: Application = Application.builder().token(telegram_token).build()
 
         # Register command handlers
         self.application.add_handler(CommandHandler("start", self.cmd_start))
@@ -20,9 +21,9 @@ class TelegramBot:
         # Register message handler for keyboard buttons
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_keyboard_input))
 
-    def get_main_keyboard(self):
+    def get_main_keyboard(self) -> ReplyKeyboardMarkup:
         """Create the main keyboard layout"""
-        keyboard = [
+        keyboard: List[List[str]] = [
             ['📊 Status', '🌡️ Sensors'],
             ['🌧️ Rename', '📋 List Items'],
             ['⚙️ Settings', '❓ Help']
@@ -34,25 +35,25 @@ class TelegramBot:
             one_time_keyboard=False  # Keep keyboard visible
         )
 
-    async def cmd_start(self, update, context):
+    async def cmd_start(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /start command and show keyboard"""
-        reply_markup = self.get_main_keyboard()
+        reply_markup: ReplyKeyboardMarkup = self.get_main_keyboard()
         await update.message.reply_text(
             'Welcome! Use the buttons below to interact with the system:',
             reply_markup=reply_markup
         )
 
-    async def show_main_keyboard(self, update, context):
+    async def show_main_keyboard(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /menu command"""
-        reply_markup = self.get_main_keyboard()
+        reply_markup: ReplyKeyboardMarkup = self.get_main_keyboard()
         await update.message.reply_text(
             'Use the buttons below:',
             reply_markup=reply_markup
         )
 
-    async def handle_keyboard_input(self, update, context):
+    async def handle_keyboard_input(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle button presses from the keyboard"""
-        text = update.message.text
+        text: str = update.message.text
 
         if text == '📊 Status':
             await self.cmd_status(update, context)
@@ -69,9 +70,9 @@ class TelegramBot:
         else:
             await update.message.reply_text("Unknown command. Please use the buttons below.")
 
-    async def show_help(self, update, context):
+    async def show_help(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Show help information"""
-        help_text = """
+        help_text: str = """
 Available commands:
 📊 Status - Check system status
 🌡️ Humidity Sensors - Get sensor readings
@@ -87,37 +88,42 @@ You can also use these commands directly:
         """
         await update.message.reply_text(help_text)
 
-    async def cmd_status(self, update, context):
+    async def cmd_status(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /status command"""
         await update.message.reply_text("Checking system status...")
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/health") as response:
-                    status = await response.json()
+                    status: Dict[str, Any] = await response.json()
                     await update.message.reply_text(f"System status: {status['status']}")
         except Exception as e:
             await update.message.reply_text(f"Error checking status: {str(e)}")
 
-    async def cmd_sensors(self, update, context):
+    async def cmd_sensors(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Handle /Humidity Sensors command"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/humidityOverview/") as response:
-                    text = await response.text()
-                    cleaned_text = text.replace('\\n', '\n').replace('"', '')
+                    text: str = await response.text()
+                    cleaned_text: str = text.replace('\\n', '\n').replace('"', '')
                     await update.message.reply_text(cleaned_text)
         except Exception as e:
             await update.message.reply_text(f"Error getting sensor data: {str(e)}")
 
-    async def cmd_rename_humidity(self, update, context):
+    async def cmd_rename_humidity(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """Rename humidity"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/humiditySensors/") as response:
-                    sensors = await response.json()
-                    id_name = [InlineKeyboardButton(f"{sensor['id']} - {sensor['name']}", callback_data=f"Rename {sensor['id']}") for sensor in sensors]
-                    keyboard = InlineKeyboardMarkup([id_name])
+                    sensors: List[Dict[str, Any]] = await response.json()
+                    id_name: List[InlineKeyboardButton] = [
+                        InlineKeyboardButton(
+                            f"{sensor['id']} - {sensor['name']}",
+                            callback_data=f"Rename {sensor['id']}"
+                        ) for sensor in sensors
+                    ]
+                    keyboard: InlineKeyboardMarkup = InlineKeyboardMarkup([id_name])
                     await update.message.reply_text(
                         'Which sensor do you want to rename?',
                         reply_markup=keyboard
@@ -125,16 +131,16 @@ You can also use these commands directly:
         except Exception as e:
             await update.message.reply_text(f"Error renaming humidity: {str(e)}")
 
-
-    async def button_handler(self, update, context):
+    async def button_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         query = update.callback_query
-        query.answer()
-        if query.data.startswith("Rename - "):
-            id = query.data.split(" - ")[1]
-            update.message.reply_text(f"Rename {id}!")
-        else:
-            update.message.reply_text(f"Unknown command. Please use the buttons below.")
+        await query.answer()
 
-    def run(self):
+        if query.data.startswith("Rename"):
+            sensor_id: str = query.data.split(" ")[1]
+            await query.edit_message_text(f"Rename {sensor_id}!")
+        else:
+            await query.edit_message_text("Unknown command. Please use the buttons below.")
+
+    def run(self) -> None:
         """Start the bot"""
         self.application.run_polling()
