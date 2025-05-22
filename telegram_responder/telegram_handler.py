@@ -15,6 +15,7 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("menu", self.show_main_keyboard))
         self.application.add_handler(CommandHandler("status", self.cmd_status))
         self.application.add_handler(CommandHandler("HumiditySensors", self.cmd_sensors))
+        self.application.add_handler(CommandHandler("HumiditySensorRename", self.cmd_rename_humidity))
 
         # Register message handler for keyboard buttons
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_keyboard_input))
@@ -23,7 +24,7 @@ class TelegramBot:
         """Create the main keyboard layout"""
         keyboard = [
             ['📊 Status', '🌡️ Sensors'],
-            ['📝 Add Item', '📋 List Items'],
+            ['🌧️ Rename', '📋 List Items'],
             ['⚙️ Settings', '❓ Help']
         ]
 
@@ -57,8 +58,8 @@ class TelegramBot:
             await self.cmd_status(update, context)
         elif text == '🌡️ Sensors':
             await self.cmd_sensors(update, context)
-        elif text == '📝 Add Item':
-            await update.message.reply_text("Add Item functionality not implemented yet.")
+        elif text == '🌧️ Rename':
+            await self.cmd_rename_humidity(update, context)
         elif text == '📋 List Items':
             await update.message.reply_text("List Items functionality not implemented yet.")
         elif text == '⚙️ Settings':
