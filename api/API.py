@@ -83,7 +83,7 @@ def read_humidity_overview( db: Session = Depends(get_db)):
                 icon = "🔥"
             if measurement.humidity < sensor.critical_level:
                 icon = "💀"
-            res += f"{sensor.name}: {measurement.humidity:1f}% {icon}<br>"
+            res += f"{sensor.name}: {measurement.humidity:1f}% {icon}\n"
     return res
 
 
