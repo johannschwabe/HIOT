@@ -23,21 +23,9 @@ class TelegramBot:
     async def cmd_sensors(self, update, context):
         """Handle /sensors command"""
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"{self.api_url}/humiditySensors/") as response:
-                sensors = await response.json()
-
-                if not sensors:
-                    await update.message.reply_text("No sensors found.")
-                    return
-
-                msg = "📊 Sensors:\n\n"
-                for sensor in sensors:
-                    async with session.get(f"{self.api_url}/humidityMeasurements/sensor/{sensor['id']}/") as lastMeasuremt:
-                        res = await lastMeasuremt.json()
-                        print(res)
-                        msg += f"ID: {sensor['id']} - {sensor['name']} - {res['humidity']}\n"
-
-                await update.message.reply_text(msg)
+            async with session.get(f"{self.api_url}/humidityOverview/") as response:
+                text = await response.text()
+                await update.message.reply_text(text)
 
     def run(self):
         """Start the bot"""

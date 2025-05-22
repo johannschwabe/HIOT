@@ -13,6 +13,10 @@ class HumiditySensorORM(BaseModel):
     id: int
     name: str
     last_connection: datetime.datetime
+    alert_level: int
+    warning_level: int
+    critical_level: int
+    overflow_level: int
 
     class Config:
         orm_mode = True
@@ -44,6 +48,10 @@ class HumiditySensor(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     last_connection = Column(DateTime, default=datetime.datetime.utcnow)
+    overflow_level = Column(Integer, default=60)
+    alert_level = Column(Integer, default=30)
+    warning_level = Column(Integer, default=20)
+    critical_level = Column(Integer, default=10)
 
 
 class HumidityMeasurement(Base):
@@ -54,3 +62,5 @@ class HumidityMeasurement(Base):
     raw_value = Column(Float, nullable=False)
     humidity = Column(Float, nullable=False)
     date = Column(DateTime, default=datetime.datetime.utcnow)
+
+

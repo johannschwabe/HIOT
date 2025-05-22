@@ -63,9 +63,27 @@ def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db
 
     return measurements
 
-@app.get("/humidityOverview", response_model=list[HumidityMeasurementORM])
-def read_humidity_overview():
-    pass
+@app.get("/humidityOverview", response_model=str)
+def read_humidity_overview( db: Session = Depends(get_db)):
+    res = ""
+    sensors = db.query(HumiditySensor).order_by(HumiditySensor.last_connection).all()
+    for sensor in sensors:
+        measurements = (db.query(HumidityMeasurementORM).filter(HumidityMeasurement.sensor_id == sensor.id)
+         .order_by(HumidityMeasurementORM.date).limit(1).all())
+        if measurements:
+            measurement = measurements[0]
+            icon = "🌿"
+            if measurement.humidity > sensor.overflow_level:
+                icon = "🤿"
+            if measurement.humidity < sensor.alert_level:
+                icon = "🍂"
+            if measurement.humidity < sensor.warning_level:
+                icon = "🔥"
+            if measurement.humidity < sensor.critical_level:
+                icon = "💀"
+            res += f"{sensor.name}: {measurement.humidity}% {icon}\n"
+    return res
+
 
 @app.get("/health")
 def health_check():
