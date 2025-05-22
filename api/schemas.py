@@ -7,36 +7,33 @@ Base = declarative_base()
 from pydantic import BaseModel
 
 
-# Pydantic models
-class SensorBase(BaseModel):
-    name: str
 
 
-class SensorCreate(SensorBase):
-    pass
-
-
-class Sensor(SensorBase):
+class HumiditySensorORM(BaseModel):
     id: int
+    name: str
     last_connection: datetime.datetime
 
     class Config:
         orm_mode = True
 
 
-class MeasurementBase(BaseModel):
-    raw_value: float
-    humidity: float
-
-
-class MeasurementCreate(MeasurementBase):
-    sensor_id: int
-
-
-class Measurement(MeasurementBase):
+class HumidityMeasurementORM(BaseModel):
     id: int
     sensor_id: int
     date: datetime.datetime
+    raw_value: float
+    humidity: float
+
+    class Config:
+        orm_mode = True
+
+
+class HumidityMeasurementCreateORM(BaseModel):
+    sensor_id: int
+    date: datetime.datetime
+    raw_value: float
+    humidity: float
 
     class Config:
         orm_mode = True

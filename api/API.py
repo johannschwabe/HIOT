@@ -3,7 +3,8 @@ import logging
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from api.schemas import Sensor, SensorCreate, HumiditySensor, Measurement, MeasurementCreate, HumidityMeasurement
+from api.schemas import HumiditySensor, HumidityMeasurement, HumidityMeasurementCreateORM, HumiditySensorORM, \
+    HumidityMeasurementORM
 from api.session import get_db
 
 logger = logging.getLogger("humidity-api")
@@ -11,13 +12,13 @@ logger = logging.getLogger("humidity-api")
 app = FastAPI(title="IoT Humidity Sensor API")
 
 
-@app.get("/humiditySensors/", response_model=list[Sensor])
+@app.get("/humiditySensors/", response_model=list[HumiditySensorORM])
 def read_sensors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     sensors = db.query(HumiditySensor).offset(skip).limit(limit).all()
     return sensors
 
 
-@app.get("/humiditySensor/{sensor_id}", response_model=Sensor)
+@app.get("/humiditySensor/{sensor_id}", response_model=HumiditySensorORM)
 def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
     if sensor is None:
@@ -25,8 +26,9 @@ def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
     return sensor
 
 
-@app.post("/humidityMeasurements/", response_model=Measurement)
-def create_measurement(measurement: MeasurementCreate, db: Session = Depends(get_db)):
+
+@app.post("/humidityMeasurements/", response_model=HumidityMeasurementORM)
+def create_measurement(measurement: HumidityMeasurementCreateORM, db: Session = Depends(get_db)):
     # Check if sensor exists
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == measurement.sensor_id).first()
     if sensor is None:
@@ -53,7 +55,7 @@ def create_measurement(measurement: MeasurementCreate, db: Session = Depends(get
     return db_measurement
 
 
-@app.get("/humidityMeasurements/sensor/{sensor_id}", response_model=list[Measurement])
+@app.get("/humidityMeasurements/sensor/{sensor_id}", response_model=list[HumidityMeasurementORM])
 def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     measurements = db.query(HumidityMeasurement).filter(
         HumidityMeasurement.sensor_id == sensor_id
@@ -61,13 +63,16 @@ def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db
 
     return measurements
 
+@app.get("/humidityOverview", response_model=list[HumidityMeasurementORM])
+def read_humidity_overview():
+    pass
 
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
 
 
-@app.post("/humiditySensors/rename", response_model=Sensor)
+@app.post("/humiditySensors/rename", response_model=HumiditySensorORM)
 def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(get_db)):
     db_sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
     if db_sensor is None:
