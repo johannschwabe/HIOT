@@ -5,10 +5,11 @@ from sqlalchemy.orm import Session
 
 from api.schemas import HumiditySensor, HumidityMeasurement, HumidityMeasurementCreateORM, HumiditySensorORM, \
     HumidityMeasurementORM
-from api.session import get_db
+from api.session import get_db, Base, engine
 
 logger = logging.getLogger("humidity-api")
 
+Base.metadata.create_all(bind=engine)
 app = FastAPI(title="IoT Humidity Sensor API")
 
 
@@ -68,8 +69,8 @@ def read_humidity_overview( db: Session = Depends(get_db)):
     res = ""
     sensors = db.query(HumiditySensor).order_by(HumiditySensor.last_connection).all()
     for sensor in sensors:
-        measurements = (db.query(HumidityMeasurementORM).filter(HumidityMeasurement.sensor_id == sensor.id)
-         .order_by(HumidityMeasurementORM.date).limit(1).all())
+        measurements = (db.query(HumidityMeasurement).filter(HumidityMeasurement.sensor_id == sensor.id)
+         .order_by(HumidityMeasurement.date).limit(1).all())
         if measurements:
             measurement = measurements[0]
             icon = "🌿"

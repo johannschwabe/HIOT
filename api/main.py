@@ -1,8 +1,7 @@
 # api/main.py
 
-
 from api.API import app
-# Load environment variables
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,12 +1,8 @@
 import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
-
 from pydantic import BaseModel
 
-
+from api.session import Base
 
 
 class HumiditySensorORM(BaseModel):
