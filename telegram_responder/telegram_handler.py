@@ -25,6 +25,7 @@ class TelegramBot:
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{self.api_url}/humidityOverview/") as response:
                 text = await response.text()
+                print(text)
                 await update.message.reply_text(text, parse_mode="HTML")
 
     def run(self):
