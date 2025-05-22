@@ -55,6 +55,10 @@ class TelegramBot:
         """Handle button presses from the keyboard"""
         text: str = update.message.text
 
+        if 'renaming_sensor_id' in context.user_data:
+            await self.process_sensor_rename(update, context, text)
+            return
+
         if text == '📊 Status':
             await self.cmd_status(update, context)
         elif text == '🌡️ Sensors':
@@ -137,9 +141,46 @@ You can also use these commands directly:
 
         if query.data.startswith("Rename"):
             sensor_id: str = query.data.split(" ")[1]
-            await query.edit_message_text(f"Rename {sensor_id}!")
+            context.user_data["renaming_sensor_id"] = sensor_id
+            await query.edit_message_text(f"Type new name for {sensor_id}!")
         else:
             await query.edit_message_text("Unknown command. Please use the buttons below.")
+
+    async def process_sensor_rename(self, update: Update, context: ContextTypes.DEFAULT_TYPE, new_name: str) -> None:
+        """Process the actual rename request"""
+        sensor_id: str = context.user_data.pop('renaming_sensor_id')
+
+        if not new_name.strip():
+            await update.message.reply_text("❌ Name cannot be empty. Please try again.")
+            return
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Prepare parameters for POST request
+                params: Dict[str, str] = {
+                    'sensor_id': sensor_id,
+                    'new_name': new_name.strip()
+                }
+
+                async with session.post(f"{self.api_url}/humiditySensors/rename", params=params) as response:
+                    if response.status == 200:
+                        updated_sensor: Dict[str, Any] = await response.json()
+                        await update.message.reply_text(
+                            f"✅ Sensor {sensor_id} successfully renamed to '{updated_sensor['name']}'"
+                        )
+                    elif response.status == 404:
+                        await update.message.reply_text(f"❌ Sensor {sensor_id} not found")
+                    else:
+                        error_text: str = await response.text()
+                        await update.message.reply_text(
+                            f"❌ Failed to rename sensor. Status: {response.status}\nError: {error_text}")
+
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error renaming sensor: {str(e)}")
+
+        # Optionally, show the main keyboard again
+        reply_markup: ReplyKeyboardMarkup = self.get_main_keyboard()
+        await update.message.reply_text("What would you like to do next?", reply_markup=reply_markup)
 
     def run(self) -> None:
         """Start the bot"""
