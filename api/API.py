@@ -84,7 +84,7 @@ def read_humidity_overview( db: Session = Depends(get_db)):
 def health_check():
     return {"status": "healthy"}
 
-@app.get("/humidity/check", response_model=list[HumidityMeasurementORM])
+@app.get("/humidity/check", response_model=str)
 def check_humidity(db: Session = Depends(get_db)):
     """
     Check the latest humidity measurement for all sensors
