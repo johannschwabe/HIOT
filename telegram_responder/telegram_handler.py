@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from telegram.ext import Application, CommandHandler
 import aiohttp
 
@@ -25,8 +27,7 @@ class TelegramBot:
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{self.api_url}/humidityOverview/") as response:
                 text = await response.text()
-                text = text.strip().replace('\\n', '\n')
-                await update.message.reply_text(text, parse_mode="HTML")
+                await update.message.reply_text(text.replace('\\n', '\n'))
 
     def run(self):
         """Start the bot"""
