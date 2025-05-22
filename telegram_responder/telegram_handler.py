@@ -117,7 +117,7 @@ You can also use these commands directly:
                 async with session.get(f"{self.api_url}/humiditySensors/") as response:
                     sensors = await response.json()
                     id_name = [f"{sensor['id']} - {sensor['name']}" for sensor in sensors]
-                    keyboard = ReplyKeyboardMarkup(id_name, one_time_keyboard=True)
+                    keyboard = ReplyKeyboardMarkup([id_name], one_time_keyboard=True)
                     await update.message.reply_text(
                         'Which sensor do you want to rename?',
                         reply_markup=keyboard
