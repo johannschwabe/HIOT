@@ -28,7 +28,7 @@ class TelegramBot:
             async with session.get(f"{self.api_url}/humidityOverview/") as response:
                 text = await response.text()
                 cleaned_text = text.replace('\\n', '\n').replace('"', '')
-                await update.message.reply_text()
+                await update.message.reply_text(cleaned_text)
 
     def run(self):
         """Start the bot"""
