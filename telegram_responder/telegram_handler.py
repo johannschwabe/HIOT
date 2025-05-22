@@ -14,7 +14,7 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("start", self.cmd_start))
         self.application.add_handler(CommandHandler("menu", self.show_main_keyboard))
         self.application.add_handler(CommandHandler("status", self.cmd_status))
-        self.application.add_handler(CommandHandler("sensors", self.cmd_sensors))
+        self.application.add_handler(CommandHandler("Humidity Sensors", self.cmd_sensors))
 
         # Register message handler for keyboard buttons
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_keyboard_input))
@@ -73,7 +73,7 @@ class TelegramBot:
         help_text = """
 Available commands:
 📊 Status - Check system status
-🌡️ Sensors - Get sensor readings
+🌡️ Humidity Sensors - Get sensor readings
 📝 Add Item - Add new item (coming soon)
 📋 List Items - List all items (coming soon)
 ⚙️ Settings - Bot settings (coming soon)
@@ -82,7 +82,7 @@ You can also use these commands directly:
 /start - Show main menu
 /menu - Show main menu
 /status - Check system status
-/sensors - Get sensor readings
+/Humidity Sensors - Get sensor readings
         """
         await update.message.reply_text(help_text)
 
@@ -99,7 +99,7 @@ You can also use these commands directly:
             await update.message.reply_text(f"Error checking status: {str(e)}")
 
     async def cmd_sensors(self, update, context):
-        """Handle /sensors command"""
+        """Handle /Humidity Sensors command"""
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/humidityOverview/") as response:
@@ -108,6 +108,21 @@ You can also use these commands directly:
                     await update.message.reply_text(cleaned_text)
         except Exception as e:
             await update.message.reply_text(f"Error getting sensor data: {str(e)}")
+
+    async def cmd_rename_humidity(self, update, context):
+        """Rename humidity"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.api_url}/humiditySensors/") as response:
+                    sensors = await response.json()
+                    id_name = [f"{sensor['id']} - {sensor['name']}" for sensor in sensors]
+                    keyboard = ReplyKeyboardMarkup(id_name, one_time_keyboard=True)
+                    await update.message.reply_text(
+                        'Which sensor do you want to rename?',
+                        reply_markup=keyboard
+                    )
+        except Exception as e:
+            await update.message.reply_text(f"Error renaming humidity: {str(e)}")
 
     def run(self):
         """Start the bot"""

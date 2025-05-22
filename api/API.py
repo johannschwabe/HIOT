@@ -83,7 +83,15 @@ def read_humidity_overview( db: Session = Depends(get_db)):
                 icon = "🔥"
             if measurement.humidity < sensor.critical_level:
                 icon = "💀"
-            res += f"{sensor.name}: {measurement.humidity:.1f}% {icon}\n"
+            seconds_since_update = (measurement.date - datetime.datetime.utcnow()).total_seconds()
+            hours = seconds_since_update // 3600
+            alerts = min(hours, 4)
+            alert = ""
+            if alerts > 0:
+                alert = " ({alerts * '🤖'})"
+            if hours > 4:
+                alert = " ☠️"
+            res += f"{sensor.name}{alert}: {measurement.humidity:.1f}% {icon}\n"
     return res
 
 
