@@ -31,6 +31,7 @@ def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
 @app.post("/humidityMeasurements/", response_model=HumidityMeasurementORM)
 def create_measurement(measurement: HumidityMeasurementCreateORM, db: Session = Depends(get_db)):
     # Check if sensor exists
+    logger.warning(f"Creating measurement {measurement}")
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == measurement.sensor_id).first()
     if sensor is None:
         db_sensor = HumiditySensor(name="Unknown")
