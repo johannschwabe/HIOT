@@ -14,7 +14,7 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("start", self.cmd_start))
         self.application.add_handler(CommandHandler("menu", self.show_main_keyboard))
         self.application.add_handler(CommandHandler("status", self.cmd_status))
-        self.application.add_handler(CommandHandler("Humidity Sensors", self.cmd_sensors))
+        self.application.add_handler(CommandHandler("HumiditySensors", self.cmd_sensors))
 
         # Register message handler for keyboard buttons
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_keyboard_input))
