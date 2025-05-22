@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 import aiohttp
 
 
@@ -16,7 +16,7 @@ class TelegramBot:
         self.application.add_handler(CommandHandler("status", self.cmd_status))
         self.application.add_handler(CommandHandler("HumiditySensors", self.cmd_sensors))
         self.application.add_handler(CommandHandler("HumiditySensorRename", self.cmd_rename_humidity))
-
+        self.application.add_handler(CallbackQueryHandler(self.button_handler))
         # Register message handler for keyboard buttons
         self.application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_keyboard_input))
 
@@ -116,7 +116,7 @@ You can also use these commands directly:
             async with aiohttp.ClientSession() as session:
                 async with session.get(f"{self.api_url}/humiditySensors/") as response:
                     sensors = await response.json()
-                    id_name = [InlineKeyboardButton(f"{sensor['id']} - {sensor['name']}", callback_data=f"{sensor['id']}") for sensor in sensors]
+                    id_name = [InlineKeyboardButton(f"{sensor['id']} - {sensor['name']}", callback_data=f"Rename {sensor['id']}") for sensor in sensors]
                     keyboard = InlineKeyboardMarkup([id_name])
                     await update.message.reply_text(
                         'Which sensor do you want to rename?',
@@ -124,6 +124,16 @@ You can also use these commands directly:
                     )
         except Exception as e:
             await update.message.reply_text(f"Error renaming humidity: {str(e)}")
+
+
+    async def button_handler(self, update, context):
+        query = update.callback_query
+        query.answer()
+        if query.data.startswith("Rename - "):
+            id = query.data.split(" - ")[1]
+            update.message.reply_text(f"Rename {id}!")
+        else:
+            update.message.reply_text(f"Unknown command. Please use the buttons below.")
 
     def run(self):
         """Start the bot"""
