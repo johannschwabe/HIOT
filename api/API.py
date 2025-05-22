@@ -1,11 +1,15 @@
 import datetime
 import logging
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from api.schemas import HumiditySensor, HumidityMeasurement, HumidityMeasurementCreateORM, HumiditySensorORM, \
     HumidityMeasurementORM
 from api.session import get_db, Base, engine
+from fastapi.responses import Response
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from io import BytesIO
 
 logger = logging.getLogger("humidity-api")
 
@@ -109,3 +113,77 @@ def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(
     db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).update({"name": new_name})
     db.commit()
     return db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
+
+
+@app.get("/humiditySensors/plot")
+def get_all_sensors_humidity_plot_7days(
+        width: int = Query(15, ge=10, le=25),
+        height: int = Query(8, ge=6, le=15),
+        db: Session = Depends(get_db)
+):
+    """
+    Generate a plot showing humidity measurements for ALL sensors in the last 7 days
+
+    Args:
+        format: Output format (png, jpg, svg, base64)
+        width: Plot width in inches
+        height: Plot height in inches
+
+    Returns:
+        Plot as image response or base64 string
+    """
+
+    # Calculate date range (last 7 days)
+    end_date = datetime.datetime.now()
+    start_date = end_date - datetime.timedelta(days=7)
+
+    # Fetch all sensors
+    sensors = db.query(HumiditySensor).all()
+    if not sensors:
+        raise HTTPException(status_code=404, detail="No sensors found")
+
+    # Create the plot
+    plt.figure(figsize=(width, height))
+
+    colors = plt.cm.Set3(range(len(sensors)))  # Generate different colors
+
+    for i, sensor in enumerate(sensors):
+        # Fetch measurements for this sensor
+        measurements = db.query(HumidityMeasurement).filter(
+            HumidityMeasurement.sensor_id == sensor.id,
+            HumidityMeasurement.date >= start_date,
+            HumidityMeasurement.date <= end_date
+        ).order_by(HumidityMeasurement.date).all()
+
+        if measurements:
+            timestamps = [m.date for m in measurements]
+            humidity_values = [m.humidity for m in measurements]
+
+            plt.plot(timestamps, humidity_values,
+                     color=colors[i], linewidth=2,
+                     label=f'{sensor.name} (ID: {sensor.id})', alpha=0.8)
+
+    # Formatting
+    plt.title('Humidity Measurements - All Sensors (Last 7 Days)', fontsize=16, fontweight='bold')
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Humidity (%)', fontsize=12)
+    plt.grid(True, alpha=0.3)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # Format x-axis
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=12))
+    plt.xticks(rotation=45)
+
+    plt.tight_layout()
+
+    # Generate output based on format (same logic as above)
+    buffer = BytesIO()
+
+
+    plt.savefig(buffer, format="png", dpi=150, bbox_inches='tight')
+    buffer.seek(0)
+    plt.close()
+
+    return Response(content=buffer.getvalue(), media_type="image/png")
+
