@@ -31,7 +31,6 @@ class HumidityMeasurementORM(BaseModel):
 
 class HumidityMeasurementCreateORM(BaseModel):
     sensor_id: int
-    date: datetime.datetime
     raw_value: float
     humidity: float
 
