@@ -38,10 +38,10 @@ class Monitor:
 
     def start_scheduled_checks(self, interval_minutes=5):
         """Start scheduled checks using schedule library"""
-        schedule.every(interval_minutes).minutes.do(
+        schedule.every(1).minutes.do(
             lambda: asyncio.run(self.check_constraints())
         )
 
         while True:
             schedule.run_pending()
-            time.sleep(6)  # Check for pending tasks every minute
+            time.sleep(60)  # Check for pending tasks every minute
