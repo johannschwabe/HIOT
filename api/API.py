@@ -209,6 +209,7 @@ def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement):
     hours = seconds_since_update // 3600
     alerts = min(hours, 4)
     alert = ""
+    logger.warning(f"Hours passed {hours}")
     if alerts > 0:
         alert = " ({alerts * '🤖'})"
     if hours > 4:
