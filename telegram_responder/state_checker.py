@@ -44,4 +44,4 @@ class Monitor:
 
         while True:
             schedule.run_pending()
-            time.sleep(60)  # Check for pending tasks every minute
+            time.sleep(6)  # Check for pending tasks every minute
