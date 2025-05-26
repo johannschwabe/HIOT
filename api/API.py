@@ -205,7 +205,7 @@ def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement):
         icon = "🔥"
     if measurement.humidity < sensor.critical_level:
         icon = "💀"
-    seconds_since_update = (measurement.date - datetime.datetime.utcnow()).total_seconds()
+    seconds_since_update = (datetime.datetime.utcnow() - measurement.date).total_seconds()
     hours = seconds_since_update // 3600
     alerts = min(hours, 4)
     alert = ""
