@@ -3,6 +3,9 @@ import aiohttp
 import schedule
 import time
 from telegram import Bot
+import logging
+
+logger = logging.getLogger("State-checker")
 
 
 class Monitor:
@@ -30,6 +33,7 @@ class Monitor:
         if self.last_alert == message and self.last_alert_time and (time.time() - self.last_alert_time) < self.min_alert_interval:
             return
         for chat_id in self.chat_ids:
+            logger.warning(f"Sending alert for chat ID {chat_id}")
             await self.bot.send_message(chat_id=chat_id, text=message)
 
     def start_scheduled_checks(self, interval_minutes=5):
