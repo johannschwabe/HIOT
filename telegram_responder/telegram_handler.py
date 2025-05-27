@@ -90,8 +90,11 @@ class TelegramBot:
 
             # Make API call to rename sensor
             async with aiohttp.ClientSession() as session:
-                data = {"name": new_name}
-                async with session.post(f"{self.api_url}/humiditySensors/rename", params=data) as response:
+                params: Dict[str, str] = {
+                    'sensor_id': sensor_id,
+                    'new_name': new_name.strip()
+                }
+                async with session.post(f"{self.api_url}/humiditySensors/rename", params=params) as response:
                     if response.status == 200:
                         await update.message.reply_text(f"✅ Sensor {sensor_id} renamed to '{new_name}'")
                     else:
