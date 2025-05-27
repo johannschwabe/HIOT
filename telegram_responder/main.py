@@ -23,6 +23,7 @@ class AsyncApplication:
     """Main application class that manages both bot and monitor"""
 
     def __init__(self):
+        logger.warning(TELEGRAM_CHAT_IDS)
         self.admin_chat_ids = TELEGRAM_CHAT_IDS.split(",")
         self.bot = TelegramBot(TELEGRAM_BOT_TOKEN)
         self.monitor = None
