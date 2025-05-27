@@ -74,7 +74,9 @@ def read_humidity_overview( db: Session = Depends(get_db)):
     res = ""
     sensors = db.query(HumiditySensor).order_by(HumiditySensor.last_connection).all()
     for sensor in sensors:
-        measurement: HumidityMeasurement = db.query(HumidityMeasurement).filter(HumidityMeasurement.sensor_id == sensor.id).order_by(HumidityMeasurement.date).first()
+        measurement: HumidityMeasurement = (db.query(HumidityMeasurement)
+                                            .filter(HumidityMeasurement.sensor_id == sensor.id)
+                                            .order_by(HumidityMeasurement.date.desc()).first())
         if measurement:
             res += get_alert_text(sensor, measurement)
     return res
@@ -205,7 +207,7 @@ def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement):
         icon = "🔥"
     if measurement.humidity < sensor.critical_level:
         icon = "💀"
-    seconds_since_update = (datetime.datetime.utcnow() - measurement.date).total_seconds()
+    seconds_since_update = (datetime.datetime.utcnow() - sensor.last_connection).total_seconds()
     hours = seconds_since_update // 3600
     alerts = min(hours, 4)
     alert = ""
