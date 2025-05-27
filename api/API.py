@@ -178,7 +178,6 @@ def get_all_sensors_humidity_plot_7days(
     plt.ylabel('Humidity (%)', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.ylim(0, 100)
     # Format x-axis
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
     plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=12))
