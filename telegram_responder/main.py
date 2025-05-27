@@ -7,7 +7,7 @@ import sys
 
 from telegram_handler import TelegramBot
 from state_checker import Monitor
-from ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_IDS
 
 # Configure logging
 logging.basicConfig(
@@ -23,7 +23,8 @@ class AsyncApplication:
     """Main application class that manages both bot and monitor"""
 
     def __init__(self):
-        self.admin_chat_ids = [TELEGRAM_CHAT_ID]
+        self.admin_chat_ids = TELEGRAM_CHAT_IDS.split(",")
+        self.bot = TelegramBot(TELEGRAM_BOT_TOKEN)
         self.monitor = None
         self.bot = None
         self.monitor_task = None
