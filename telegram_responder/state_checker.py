@@ -48,8 +48,7 @@ class Monitor:
     async def _send_alert(self, message):
         """Send alert to all configured chat IDs"""
         # Check if we should rate limit
-        if (self.last_alert == message and
-                self.last_alert_time and
+        if (self.last_alert_time and
                 (time.time() - self.last_alert_time) < self.min_alert_interval):
             logger.debug("Skipping alert due to rate limiting")
             return
