@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from api.schemas import HumiditySensor, HumidityMeasurement, HumidityMeasurementCreateORM, HumiditySensorORM, \
     HumidityMeasurementORM
-from api.session import get_db, Base, engine
+from api.session import get_db
 from fastapi.responses import Response
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -13,7 +13,6 @@ from io import BytesIO
 
 logger = logging.getLogger("humidity-api")
 
-Base.metadata.create_all(bind=engine)
 app = FastAPI(title="IoT Humidity Sensor API")
 
 

@@ -92,7 +92,9 @@ def create_database_engine_with_retry():
 try:
     engine = create_database_engine_with_retry()
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
     Base = declarative_base()
+    Base.metadata.create_all(bind=engine)
     logger.info("Database setup completed successfully")
 except Exception as e:
     logger.error(f"Failed to initialize database: {e}")
