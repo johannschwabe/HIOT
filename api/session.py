@@ -2,7 +2,6 @@
 import logging
 import time
 import socket
-from numbers import Number
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,11 +12,11 @@ from api.ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 logger = logging.getLogger("telegram-notifier")
 
 
-def wait_for_db_host(host, port: Number, timeout=60):
+def wait_for_db_host(host, port, timeout=60):
     """Wait for database host to be reachable"""
     logger.info(f"Waiting for database at {host}:{port}...")
     start_time = time.time()
-
+    port = int(port)
     while time.time() - start_time < timeout:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
