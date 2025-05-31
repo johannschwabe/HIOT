@@ -2,6 +2,8 @@
 import logging
 import time
 import socket
+from numbers import Number
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -11,7 +13,7 @@ from api.ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 logger = logging.getLogger("telegram-notifier")
 
 
-def wait_for_db_host(host, port, timeout=60):
+def wait_for_db_host(host, port: Number, timeout=60):
     """Wait for database host to be reachable"""
     logger.info(f"Waiting for database at {host}:{port}...")
     start_time = time.time()
@@ -41,7 +43,7 @@ def wait_for_db_host(host, port, timeout=60):
 def create_database_engine_with_retry():
     """Create database engine with connection retry"""
     # First, wait for the host to be reachable
-    wait_for_db_host(DB_HOST, DB_PORT)
+    wait_for_db_host(DB_HOST, int(DB_PORT))
 
     # Create the database URL
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

@@ -39,7 +39,7 @@ services:
       - DB_NAME=iot_db
       - TELEGRAM_CHAT_IDS=300492094,86537268
     networks:
-      - hiot-internal     # Internal communication with db
+      - hiot-internal
       - traefik_traefik-network
     secrets:
       - hiot_db_password
