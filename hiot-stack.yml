@@ -15,6 +15,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - hiot-internal  # Private network for internal communication
+      - traefik_traefik-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
       interval: 5s
@@ -27,6 +28,14 @@ services:
       placement:
         constraints:
           - node.hostname == null
+      labels:
+        - traefik.enable=true
+        - traefik.tcp.routers.db-debug.rule=HostSNI(`*`)
+        - traefik.tcp.routers.db-debug.entrypoints=postgres-debug
+        - traefik.tcp.services.db-debug.loadbalancer.server.port=5432
+        - traefik.tcp.middlewares.db-debug-ipwhitelist.ipwhitelist.sourcerange=192.168.1.238/32
+        - traefik.tcp.routers.db-debug.middlewares=db-debug-ipwhitelist
+        - traefik.docker.network=traefik_traefik-network
 
   api:
     image: localhost:5000/hiot-api:latest
