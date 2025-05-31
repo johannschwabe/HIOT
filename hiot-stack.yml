@@ -31,8 +31,8 @@ services:
       - DB_NAME=iot_db
       - TELEGRAM_CHAT_IDS=300492094,86537268
     networks:
-      - hiot-internal     # Internal communication with db and telegram
-      - traefik_traefik-network    # Use existing traefik network
+      - hiot-internal     # Internal communication with db
+      - traefik_traefik-network
     secrets:
       - hiot_db_password
       - hiot_telegram_bot_token
@@ -46,13 +46,13 @@ services:
   telegram-service:
     image: localhost:5000/hiot-telegram:latest
     environment:
-      - API_URL=http://api:8000  # Use service name for internal communication
+      - API_URL=http://api:8000
       - TELEGRAM_CHAT_IDS=300492094,86537268
 
     depends_on:
       - api
     networks:
-      - hiot-internal  # Private network for internal communication
+      - traefik_traefik-network
     secrets:
       - hiot_telegram_bot_token
     deploy:
