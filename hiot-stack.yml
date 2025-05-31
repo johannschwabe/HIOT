@@ -50,6 +50,8 @@ services:
         - traefik.http.routers.api.rule=PathPrefix(`/hiot`)
         - traefik.http.routers.api.entrypoints=web
         - traefik.http.services.api.loadbalancer.server.port=8000
+        - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/hiot
+        - traefik.http.routers.api.middlewares=api-stripprefix
       placement:
         constraints:
           - node.hostname == null
