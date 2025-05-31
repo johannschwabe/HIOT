@@ -47,6 +47,8 @@ services:
     image: localhost:5000/hiot-telegram:latest
     environment:
       - API_URL=http://api:8000  # Use service name for internal communication
+      - TELEGRAM_CHAT_IDS=300492094,86537268
+
     depends_on:
       - api
     networks:
