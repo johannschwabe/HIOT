@@ -33,8 +33,8 @@ services:
         - traefik.tcp.routers.db-debug.rule=HostSNI(`*`)
         - traefik.tcp.routers.db-debug.entrypoints=postgres-debug
         - traefik.tcp.services.db-debug.loadbalancer.server.port=5432
-        - traefik.tcp.middlewares.db-debug-ipwhitelist.ipwhitelist.sourcerange=192.168.1.238/32
-        - traefik.tcp.routers.db-debug.middlewares=db-debug-ipwhitelist
+#        - traefik.tcp.middlewares.db-debug-ipwhitelist.ipwhitelist.sourcerange=192.168.1.238/32
+#        - traefik.tcp.routers.db-debug.middlewares=db-debug-ipwhitelist
         - traefik.docker.network=traefik_traefik-network
 
   api:
