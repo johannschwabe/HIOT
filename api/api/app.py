@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from database import init_database, get_db
-from models import HumiditySensor, HumidityMeasurement
-from schemas import HumiditySensorORM, HumidityMeasurementCreateORM, HumidityMeasurementORM
-from ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+from api.ENV import DB_USER, DB_PORT, DB_PASSWORD, DB_NAME, DB_HOST
+from api.database import init_database, get_db
+from api.models import HumiditySensor, HumidityMeasurement
+from api.schemas import HumiditySensorORM, HumidityMeasurementORM, HumidityMeasurementCreateORM
+
 logger = logging.getLogger("humidity-api")
 
 app = FastAPI(title="IoT Humidity Sensor API")
@@ -230,10 +231,3 @@ def get_all_sensors_humidity_plot_7days(
     plt.close()
 
     return Response(content=buffer.getvalue(), media_type="image/png")
-
-
-# main.py
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
