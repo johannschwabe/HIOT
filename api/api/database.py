@@ -50,7 +50,6 @@ def init_database(db_url: str, max_retries: int = 10, retry_delay: int = 3):
     return False
 
 
-@contextmanager
 def get_db():
     """Database session dependency"""
     db = SessionLocal()
