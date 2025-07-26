@@ -13,7 +13,7 @@ from io import BytesIO
 
 logger = logging.getLogger("humidity-api")
 
-app = FastAPI(title="IoT Humidity Sensor API")
+app = FastAPI(title="IoT Humidity Sensor API", root_path="/hiot")
 
 
 @app.get("/humiditySensors/", response_model=list[HumiditySensorORM])
