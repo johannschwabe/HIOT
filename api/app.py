@@ -2,6 +2,7 @@ import os
 import datetime
 import logging
 from io import BytesIO
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Query
@@ -17,12 +18,9 @@ from api.schemas import HumiditySensorORM, HumidityMeasurementORM, HumidityMeasu
 
 logger = logging.getLogger("humidity-api")
 
-app = FastAPI(title="IoT Humidity Sensor API")
 
-
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """Initialize database connection and tables on startup"""
     db_url = os.getenv("DATABASE_URL",
                        f"postgresql://{DB_USER}:{DB_PASSWORD}@"
@@ -30,6 +28,11 @@ async def startup_event():
                        )
     init_database(db_url)
     logger.info("Application startup complete")
+    yield
+    # Cleanup code can go here if needed
+
+
+app = FastAPI(title="IoT Humidity Sensor API", lifespan=lifespan)
 
 
 # Utility functions
@@ -235,5 +238,4 @@ def get_all_sensors_humidity_plot_7days(
     return Response(content=buffer.getvalue(), media_type="image/png")
 
 if __name__ == "__main__":
-
     uvicorn.run(app, host="0.0.0.0", port=8000)

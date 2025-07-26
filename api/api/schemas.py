@@ -13,7 +13,7 @@ class HumiditySensorORM(BaseModel):
     overflow_level: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class HumidityMeasurementORM(BaseModel):
@@ -24,7 +24,7 @@ class HumidityMeasurementORM(BaseModel):
     humidity: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class HumidityMeasurementCreateORM(BaseModel):
