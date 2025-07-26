@@ -33,6 +33,9 @@ services:
 #        - traefik.tcp.middlewares.db-debug-ipwhitelist.ipwhitelist.sourcerange=192.168.1.238/32
 #        - traefik.tcp.routers.db-debug.middlewares=db-debug-ipwhitelist
         - traefik.docker.network=traefik_traefik-network
+      placement:
+        constraints:
+          - node.hostname == null
 
   api:
     image: localhost:5000/hiot-api:latest
@@ -61,6 +64,10 @@ services:
         - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/hiot
         - traefik.http.routers.api.middlewares=api-stripprefix
         - traefik.docker.network=traefik_traefik-network
+      placement:
+        constraints:
+          - node.hostname == null
+
 
   telegram-service:
     image: localhost:5000/hiot-telegram:latest
@@ -78,6 +85,10 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+      placement:
+        constraints:
+          - node.hostname == null
+
 
 volumes:
   postgres_data:

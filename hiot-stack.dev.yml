@@ -33,9 +33,6 @@ services:
 #        - traefik.tcp.middlewares.db-debug-ipwhitelist.ipwhitelist.sourcerange=192.168.1.238/32
 #        - traefik.tcp.routers.db-debug.middlewares=db-debug-ipwhitelist
         - traefik.docker.network=traefik_traefik-network
-      placement:
-        constraints:
-          - node.hostname == null
 
 
   api:
@@ -63,9 +60,6 @@ services:
         - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/hiot
         - traefik.http.routers.api.middlewares=api-stripprefix
         - traefik.docker.network=traefik_traefik-network
-      placement:
-        constraints:
-          - node.hostname == null
 
 
   telegram-service:
@@ -84,9 +78,7 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-      placement:
-        constraints:
-          - node.hostname == null
+
 
 
 volumes:
@@ -98,4 +90,4 @@ networks:
     internal: true  # This makes it internal-only (no external internet access)
     attachable: true
   traefik_traefik-network:
-    external: true  # Use the existing traefik network
+    external: false  # Use the existing traefik network
