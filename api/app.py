@@ -1,56 +1,123 @@
+import os
 import datetime
 import logging
+from io import BytesIO
 from fastapi import FastAPI, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-
-from api.schemas import HumiditySensor, HumidityMeasurement, HumidityMeasurementCreateORM, HumiditySensorORM, \
-    HumidityMeasurementORM
-from api.session import get_db
 from fastapi.responses import Response
+from sqlalchemy.orm import Session
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from io import BytesIO
+
+from api.database import get_db, init_database
+from api.models import HumiditySensor, HumidityMeasurement
+from api.schemas import HumidityMeasurementORM, HumidityMeasurementCreateORM, HumiditySensorORM
 
 logger = logging.getLogger("humidity-api")
 
 app = FastAPI(title="IoT Humidity Sensor API", root_path="/hiot")
 
 
+# Initialize database on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connection and tables on startup"""
+    db_url = os.getenv("DATABASE_URL",
+                       f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
+                       f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+                       )
+    init_database(db_url)
+    logger.info("Application startup complete")
+
+
+# Utility functions
+def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement) -> str:
+    """Generate alert text with appropriate emoji based on humidity level"""
+    # Determine humidity status emoji
+    if measurement.humidity > sensor.overflow_level:
+        icon = "🤿"
+    elif measurement.humidity < sensor.critical_level:
+        icon = "💀"
+    elif measurement.humidity < sensor.warning_level:
+        icon = "🔥"
+    elif measurement.humidity < sensor.alert_level:
+        icon = "🍂"
+    else:
+        icon = "🌿"
+
+    # Calculate time since last update
+    seconds_since_update = (datetime.datetime.utcnow() - sensor.last_connection).total_seconds()
+    hours = int(seconds_since_update // 3600)
+
+    # Generate connection status alert
+    if hours > 4:
+        alert = " ☠️"
+    elif hours > 0:
+        alerts = min(hours, 4)
+        alert = f" ({'🤖' * alerts})"
+    else:
+        alert = ""
+
+    return f"{sensor.name}{alert}: {measurement.humidity:.1f}% {icon}\n"
+
+
+# API Endpoints
+@app.get("/health")
+def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+
 @app.get("/humiditySensors/", response_model=list[HumiditySensorORM])
 def read_sensors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Get list of all humidity sensors"""
     sensors = db.query(HumiditySensor).offset(skip).limit(limit).all()
     return sensors
 
 
 @app.get("/humiditySensor/{sensor_id}", response_model=HumiditySensorORM)
 def read_sensor(sensor_id: int, db: Session = Depends(get_db)):
+    """Get specific sensor by ID"""
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
     if sensor is None:
         raise HTTPException(status_code=404, detail="Sensor not found")
     return sensor
 
 
+@app.post("/humiditySensors/rename", response_model=HumiditySensorORM)
+def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(get_db)):
+    """Rename a humidity sensor"""
+    sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
+    if sensor is None:
+        raise HTTPException(status_code=404, detail="Sensor not found")
+
+    sensor.name = new_name
+    db.commit()
+    db.refresh(sensor)
+    return sensor
+
 
 @app.post("/humidityMeasurements/", response_model=HumidityMeasurementORM)
 def create_measurement(measurement: HumidityMeasurementCreateORM, db: Session = Depends(get_db)):
-    # Check if sensor exists
+    """Create a new humidity measurement"""
     logger.warning(f"Creating measurement {measurement}")
+
+    # Get or create sensor
     sensor = db.query(HumiditySensor).filter(HumiditySensor.id == measurement.sensor_id).first()
     if sensor is None:
-        db_sensor = HumiditySensor(name="Unknown")
-        db.add(db_sensor)
+        sensor = HumiditySensor(id=measurement.sensor_id, name="Unknown")
+        db.add(sensor)
         db.commit()
-        db.refresh(db_sensor)
-        sensor = db_sensor
+        db.refresh(sensor)
 
-    # Update last connection time
+    # Update sensor's last connection time
     sensor.last_connection = datetime.datetime.utcnow()
 
     # Create measurement
     db_measurement = HumidityMeasurement(
         sensor_id=measurement.sensor_id,
         raw_value=measurement.raw_value,
-        humidity=measurement.humidity
+        humidity=measurement.humidity,
+        battery_voltage=measurement.battery_voltage
     )
 
     db.add(db_measurement)
@@ -62,65 +129,47 @@ def create_measurement(measurement: HumidityMeasurementCreateORM, db: Session = 
 
 @app.get("/humidityMeasurements/sensor/{sensor_id}", response_model=list[HumidityMeasurementORM])
 def read_sensor_measurements(sensor_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """Get measurements for a specific sensor"""
     measurements = db.query(HumidityMeasurement).filter(
         HumidityMeasurement.sensor_id == sensor_id
     ).offset(skip).limit(limit).all()
-
     return measurements
 
+
 @app.get("/humidityOverview", response_model=str)
-def read_humidity_overview( db: Session = Depends(get_db)):
-    res = ""
+def read_humidity_overview(db: Session = Depends(get_db)):
+    """Get overview of all sensors with their latest measurements"""
+    result = ""
     sensors = db.query(HumiditySensor).order_by(HumiditySensor.last_connection).all()
+
     for sensor in sensors:
-        measurement: HumidityMeasurement = (db.query(HumidityMeasurement)
-                                            .filter(HumidityMeasurement.sensor_id == sensor.id)
-                                            .order_by(HumidityMeasurement.date.desc()).first())
+        measurement = db.query(HumidityMeasurement).filter(
+            HumidityMeasurement.sensor_id == sensor.id
+        ).order_by(HumidityMeasurement.date.desc()).first()
+
         if measurement:
-            res += get_alert_text(sensor, measurement)
-    return res
+            result += get_alert_text(sensor, measurement)
 
+    return result
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
 
 @app.get("/humidity/check", response_model=str)
 def check_humidity(db: Session = Depends(get_db)):
-    """
-    Check the latest humidity measurement for all sensors
-
-    Returns:
-        Latest measurement for each sensor if critical
-    """
+    """Check for critical humidity levels across all sensors"""
     sensors = db.query(HumiditySensor).all()
     if not sensors:
         raise HTTPException(status_code=404, detail="No sensors found")
 
-    res = ""
+    result = ""
     for sensor in sensors:
-        latest_measurement = db.query(HumidityMeasurement).filter(
+        latest = db.query(HumidityMeasurement).filter(
             HumidityMeasurement.sensor_id == sensor.id
         ).order_by(HumidityMeasurement.date.desc()).first()
 
-        if latest_measurement and (
-                latest_measurement.humidity > sensor.overflow_level or
-                latest_measurement.humidity < sensor.alert_level
-        ):
-            res += get_alert_text(sensor, latest_measurement)
+        if latest and (latest.humidity > sensor.overflow_level or latest.humidity < sensor.alert_level):
+            result += get_alert_text(sensor, latest)
 
-    return res
-
-
-@app.post("/humiditySensors/rename", response_model=HumiditySensorORM)
-def rename_humidity_sensor(sensor_id: int, new_name: str, db: Session = Depends(get_db)):
-    db_sensor = db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
-    if db_sensor is None:
-        raise HTTPException(status_code=404, detail="Sensor not found")
-
-    db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).update({"name": new_name})
-    db.commit()
-    return db.query(HumiditySensor).filter(HumiditySensor.id == sensor_id).first()
+    return result
 
 
 @app.get("/humiditySensors/plot")
@@ -129,19 +178,8 @@ def get_all_sensors_humidity_plot_7days(
         height: int = Query(8, ge=6, le=15),
         db: Session = Depends(get_db)
 ):
-    """
-    Generate a plot showing humidity measurements for ALL sensors in the last 7 days
-
-    Args:
-        format: Output format (png, jpg, svg, base64)
-        width: Plot width in inches
-        height: Plot height in inches
-
-    Returns:
-        Plot as image response or base64 string
-    """
-
-    # Calculate date range (last 7 days)
+    """Generate humidity plot for all sensors over the last 7 days"""
+    # Calculate date range
     end_date = datetime.datetime.now()
     start_date = end_date - datetime.timedelta(days=7)
 
@@ -150,13 +188,11 @@ def get_all_sensors_humidity_plot_7days(
     if not sensors:
         raise HTTPException(status_code=404, detail="No sensors found")
 
-    # Create the plot
+    # Create plot
     plt.figure(figsize=(width, height))
-
-    colors = plt.cm.Set3(range(len(sensors)))  # Generate different colors
+    colors = plt.cm.Set3(range(len(sensors)))
 
     for i, sensor in enumerate(sensors):
-        # Fetch measurements for this sensor
         measurements = db.query(HumidityMeasurement).filter(
             HumidityMeasurement.sensor_id == sensor.id,
             HumidityMeasurement.date >= start_date,
@@ -167,16 +203,19 @@ def get_all_sensors_humidity_plot_7days(
             timestamps = [m.date for m in measurements]
             humidity_values = [m.humidity for m in measurements]
 
-            plt.plot(timestamps, humidity_values,
-                     color=colors[i], linewidth=2,
-                     label=f'{sensor.name} (ID: {sensor.id})', alpha=0.8)
+            plt.plot(
+                timestamps, humidity_values,
+                color=colors[i], linewidth=2,
+                label=f'{sensor.name} (ID: {sensor.id})', alpha=0.8
+            )
 
-    # Formatting
+    # Format plot
     plt.title('Humidity Measurements - All Sensors (Last 7 Days)', fontsize=16, fontweight='bold')
     plt.xlabel('Time', fontsize=12)
     plt.ylabel('Humidity (%)', fontsize=12)
     plt.grid(True, alpha=0.3)
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
     # Format x-axis
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M'))
     plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=12))
@@ -184,10 +223,8 @@ def get_all_sensors_humidity_plot_7days(
 
     plt.tight_layout()
 
-    # Generate output based on format (same logic as above)
+    # Generate image
     buffer = BytesIO()
-
-
     plt.savefig(buffer, format="png", dpi=150, bbox_inches='tight')
     buffer.seek(0)
     plt.close()
@@ -195,23 +232,8 @@ def get_all_sensors_humidity_plot_7days(
     return Response(content=buffer.getvalue(), media_type="image/png")
 
 
-def get_alert_text(sensor: HumiditySensor, measurement: HumidityMeasurement):
-    icon = "🌿"
-    if measurement.humidity > sensor.overflow_level:
-        icon = "🤿"
-    if measurement.humidity < sensor.alert_level:
-        icon = "🍂"
-    if measurement.humidity < sensor.warning_level:
-        icon = "🔥"
-    if measurement.humidity < sensor.critical_level:
-        icon = "💀"
-    seconds_since_update = (datetime.datetime.utcnow() - sensor.last_connection).total_seconds()
-    hours = seconds_since_update // 3600
-    alerts = min(hours, 4)
-    alert = ""
-    logger.warning(f"Hours passed {hours}")
-    if alerts > 0:
-        alert = " ({alerts * '🤖'})"
-    if hours > 4:
-        alert = " ☠️"
-    return f"{sensor.name}{alert}: {measurement.humidity:.1f}% {icon}\n"
+# main.py
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
