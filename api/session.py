@@ -46,7 +46,7 @@ def create_database_engine_with_retry():
 
     # Create the database URL
     DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
+    logger.info(DATABASE_URL)
     # Create engine with connection retry
     max_retries = 10
     retry_delay = 3
