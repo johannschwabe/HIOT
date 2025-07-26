@@ -99,4 +99,4 @@ networks:
     internal: true  # This makes it internal-only (no external internet access)
     attachable: true
   traefik_traefik-network:
-    external: false  # Use the existing traefik network
+    external: true
