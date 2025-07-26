@@ -10,9 +10,9 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
 from dotenv import load_dotenv
 
-from api.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-from api.schemas import HumiditySensor
-from api.session import SessionLocal
+from app.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from app.schemas import HumiditySensor
+from app.session import SessionLocal
 
 load_dotenv()
 logger = logging.getLogger("telegram-notifier")

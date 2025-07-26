@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from pydantic import BaseModel
 
-from api.database import Base
+from app.database import Base
 
 
 class HumiditySensor(Base):
