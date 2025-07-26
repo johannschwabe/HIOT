@@ -11,7 +11,7 @@ import matplotlib.dates as mdates
 from database import init_database, get_db
 from models import HumiditySensor, HumidityMeasurement
 from schemas import HumiditySensorORM, HumidityMeasurementCreateORM, HumidityMeasurementORM
-
+from ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 logger = logging.getLogger("humidity-api")
 
 app = FastAPI(title="IoT Humidity Sensor API", root_path="/hiot")
@@ -22,8 +22,8 @@ app = FastAPI(title="IoT Humidity Sensor API", root_path="/hiot")
 async def startup_event():
     """Initialize database connection and tables on startup"""
     db_url = os.getenv("DATABASE_URL",
-                       f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@"
-                       f"{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+                       f"postgresql://{DB_USER}:{DB_PASSWORD}@"
+                       f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
                        )
     init_database(db_url)
     logger.info("Application startup complete")
