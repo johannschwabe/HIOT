@@ -58,11 +58,11 @@ services:
     deploy:
       labels:
         - traefik.enable=true
-        - traefik.http.routers.api.rule=PathPrefix(`/hiot`)
-        - traefik.http.routers.api.entrypoints=web
-        - traefik.http.services.api.loadbalancer.server.port=8000
-        - traefik.http.middlewares.api-stripprefix.stripprefix.prefixes=/hiot
-        - traefik.http.routers.api.middlewares=api-stripprefix
+        - traefik.http.routers.hiot-api.rule=PathPrefix(`/hiot`)
+        - traefik.http.routers.hiot-api.entrypoints=web
+        - traefik.http.services.hiot-api.loadbalancer.server.port=8000
+        - traefik.http.middlewares.hiot-api-stripprefix.stripprefix.prefixes=/hiot
+        - traefik.http.routers.hiot-api.middlewares=api-stripprefix
         - traefik.docker.network=traefik_traefik-network
       placement:
         constraints:
