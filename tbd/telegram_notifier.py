@@ -1,18 +1,15 @@
 # api/telegram_notifier.py
-import os
 import logging
-from typing import Optional, Dict, Any, Union, List, Callable
+from typing import Any, Callable
 from enum import Enum
-import asyncio
 import telegram
-from sqlalchemy.orm import Session
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters, CallbackContext
 from dotenv import load_dotenv
 
-from app.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-from app.schemas import HumiditySensor
-from app.session import SessionLocal
+from api.api.ENV import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from api.api.schemas import HumiditySensor
+from api.api import SessionLocal
 
 load_dotenv()
 logger = logging.getLogger("telegram-notifier")

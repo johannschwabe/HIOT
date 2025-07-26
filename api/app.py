@@ -8,9 +8,9 @@ from sqlalchemy.orm import Session
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from app.database import get_db, init_database
-from app.models import HumiditySensor, HumidityMeasurement
-from app.schemas import HumidityMeasurementORM, HumidityMeasurementCreateORM, HumiditySensorORM
+from database import init_database, get_db
+from models import HumiditySensor, HumidityMeasurement
+from schemas import HumiditySensorORM, HumidityMeasurementCreateORM, HumidityMeasurementORM
 
 logger = logging.getLogger("humidity-api")
 

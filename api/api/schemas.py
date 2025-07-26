@@ -1,3 +1,8 @@
+import datetime
+
+from pydantic import BaseModel
+
+
 class HumiditySensorORM(BaseModel):
     id: int
     name: str
