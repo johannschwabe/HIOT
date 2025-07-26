@@ -2,6 +2,8 @@ import os
 import datetime
 import logging
 from io import BytesIO
+
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
