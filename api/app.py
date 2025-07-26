@@ -14,7 +14,7 @@ from schemas import HumiditySensorORM, HumidityMeasurementCreateORM, HumidityMea
 from ENV import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 logger = logging.getLogger("humidity-api")
 
-app = FastAPI(title="IoT Humidity Sensor API", root_path="/hiot")
+app = FastAPI(title="IoT Humidity Sensor API")
 
 
 # Initialize database on startup
